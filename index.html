@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ua">
+<head>
+    <meta charset="UTF-8" />
+    <title>UniHelper - Платформа для підлітків</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">UniHelper</div>
+        <nav>
+            <a href="#home">Головна</a>
+            <a href="#contacts">Контакти</a>
+            <a href="#privacy">Політика</a>
+        </nav>
+    </header>
+
+    <section class="welcome" id="home">
+        <h1>Ласкаво просимо до UniHelper</h1>
+        <p>Платформа для оплачуваних завдань від 14 років.</p>
+        <p>Безпечно. Легко. Зручно</p>
+        <a href="#offer-section" class="btn-start">Почати</a>
+    </section>
+
+    <div class="parallax"></div>
+
+    <section id="offer-section" class="section light-bg">
+        <h2>Що ви можете зробити?</h2>
+        <p>Оберіть напрямок, у якому бажаєте допомагати:</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 30px;">
+            <button class="action-btn">Прибирання</button>
+            <button class="action-btn">Доставка</button>
+            <button class="action-btn">SMM</button>
+            <button class="action-btn">Дизайн</button>
+            <button class="action-btn">Інше</button>
+        </div>
+    </section>
+
+    <div class="parallax"></div>
+
+    <section class="section light-bg" id="request-form">
+        <h2>Залишити запит на допомогу</h2>
+        <p>Заповніть форму нижче, щоб інші користувачі могли вам допомогти:</p>
+        <form id="requestForm">
+            <input type="text" id="username" placeholder="Ваше ім'я" required />
+            <input type="text" id="task" placeholder="Яка допомога потрібна?" required />
+            <button type="submit">Надіслати запит</button>
+        </form>
+
+        <h3>Доступні запити</h3>
+        <div id="requestList">
+            <!-- Здесь будут карточки с запросами -->
+        </div>
+    </section>
+
+    <div class="parallax"></div>
+
+    <section class="section" id="contacts">
+        <h2>Контакти</h2>
+        <p>Email: support@unihelper.ua</p>
+        <p>Телефон: +380 99 123 45 67</p>
+        <p>Адреса: вул. Освітня, 10, Київ, Україна</p>
+    </section>
+
+    <div class="parallax"></div>
+
+    <section class="section" id="privacy">
+        <h2>Політика конфіденційності</h2>
+        <p>Ми поважаємо вашу конфіденційність і зберігаємо вашу інформацію в безпеці.</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 UniHelper. Усі права захищено.</p>
+        <p>
+            <a href="#home">Головна</a> |
+            <a href="#contacts">Контакти</a> |
+            <a href="#privacy">Політика конфіденційності</a>
+        </p>
+    </footer>
+
+    <!-- Firebase JS SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA2p55o597mV-Le8hf32_l0rosqN_TzRlU",
+        authDomain: "unihelper-3f037.firebaseapp.com",
+        projectId: "unihelper-3f037",
+        storageBucket: "unihelper-3f037.firebasestorage.app",
+        messagingSenderId: "296757381911",
+        appId: "1:296757381911:web:e6506deb3038969f154552",
+        measurementId: "G-PF91JMDZLR"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      const form = document.getElementById('requestForm');
+      const requestList = document.getElementById('requestList');
+
+      // Функция для создания карточки запроса
+      function createRequestCard(id, data) {
+        const div = document.createElement('div');
+        div.className = 'request';
+
+        const name = document.createElement('strong');
+        name.textContent = data.username;
+        div.appendChild(name);
+
+        const task = document.createElement('div');
+        task.textContent = data.task;
+        div.appendChild(task);
+
+        const btn = document.createElement('button');
+        btn.textContent = data.accepted ? 'Прийнято' : 'Взяти в роботу';
+        btn.disabled = !!data.accepted;
+
+        btn.onclick = async () => {
+          if (!data.accepted) {
+            await updateDoc(doc(db, "requests", id), { accepted: true });
+          }
+        };
+        div.appendChild(btn);
+
+        return div;
+      }
+
+      // Слушаем изменения в коллекции запросов
+      onSnapshot(collection(db, "requests"), (snapshot) => {
+        requestList.innerHTML = '';
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          const card = createRequestCard(docSnap.id, data);
+          requestList.appendChild(card);
+        });
+      });
+
+      // Обработка отправки формы
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const username = form.username.value.trim();
+        const task = form.task.value.trim();
+
+        if (username && task) {
+          await addDoc(collection(db, "requests"), {
+            username,
+            task,
+            accepted: false,
+            createdAt: Date.now()
+          });
+          form.reset();
+        }
+      });
+    </script>
+
+</body>
+</html>
